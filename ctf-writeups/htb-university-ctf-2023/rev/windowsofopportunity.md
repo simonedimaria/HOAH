@@ -124,44 +124,11 @@ Thinking about it, the combination of interest is very easy to bruteforce, but i
 Why?\
 Let's visualize the algorithm:
 
-```mermaid
-%%{config: { "fontFamily": "mono", "theme": "dark"} }%%
-flowchart LR
-subgraph 0["`i=0`"]
-	direction TB
-    bytes --> sum0
-    subgraph bytes
-    direction LR 
-	    b0-. "`i+1`" .->b1
-    end
-end
-0~~~b2
-b2~~~b3
-b3~~~bn
-bn~~~b36
-b36
-```
+![](/.gitbook/assets/first_iteration.png)
 
 At the first iteration, the first two bytes (`b1` and `b2`) are taken into consideration, their sum (`sum0`) should be equal to `arr[0]` which is `0x9c` (156).
 
-```mermaid
-%%{config: { "fontFamily": "mono", "theme": "dark"} }%%
-flowchart LR
-subgraph 1["`i=1`"]
-	direction TB
-    bytes1-2 --> sum1
-    subgraph bytes1-2
-    direction LR 
-	    b1-. "`i+1`" .->b2
-    end
-end
-
-b0~~~1
-1~~~b3
-b3~~~bn
-bn~~~b36
-b36
-```
+![](/.gitbook/assets/second_iteration.png)
 
 At the second iteration, the second byte (again) and the third byte (`b1` and `b2`) are taken in consideration, their sum (`sum1`) should be equal to `arr[1]` which is `0x96` (150).
 

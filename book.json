@@ -1,8 +1,0 @@
-{
-    "plugins": ["mermaid-newface"],
-    "pluginsConfig": {
-      "mermaid-newface": {
-        "theme": "dark"
-      }
-    }
-  }
