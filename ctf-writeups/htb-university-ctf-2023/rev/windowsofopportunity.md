@@ -142,7 +142,7 @@ bn~~~b36
 b36
 ```
 
-At the first iteration, the first two bytes (`b1` and `b2`) are taken in consideration, their sum (`sum0`) should be equal to `arr[0]` which is `0x9c` (156).
+At the first iteration, the first two bytes (`b1` and `b2`) are taken into consideration, their sum (`sum0`) should be equal to `arr[0]` which is `0x9c` (156).
 
 ```mermaid
 %%{config: { "fontFamily": "mono", "theme": "dark"} }%%
