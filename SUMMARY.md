@@ -1,6 +1,8 @@
 # HOAH
 
 - [Ctf Writeups](ctf-writeups/README.md)
+  - [Intigriti Challenges](ctf-writeups/intigriti-challenges/README.md)
+    - [1223](ctf-writeups/intigriti-challenges/1223/README.md)
   - [Asisquals 22](ctf-writeups/asisquals-22/README.md)
     * [Beginner Ducks](ctf-writeups/asisquals-22/beginner-ducks.md)
   - [Csaw 22](ctf-writeups/csaw-22/README.md)
