@@ -1,2 +1,0 @@
-# INTIGRITI Challenges
-
