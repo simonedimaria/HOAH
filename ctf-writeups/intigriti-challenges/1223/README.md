@@ -19,18 +19,6 @@
 
 ![first_view](./assets/firstlook.png)
 
-[PISCIO]
-
-<table>
-<tr>
-<th>
-<p> <small>EXAMPLE TEXT</small> </p>
-</th>
-<th>
-<p> <small>EXAMPLE TEXT</small></p>
-</th>
-</tr>
-</table>
 
 
 
@@ -154,49 +142,51 @@ Now let's take a look at the regex breakdown.
 /(\b)(on\S+)(\s*)=|javascript|<(|\/|[^\/>][^>]+|\/[^>][^>]+)>|({+.*}+)/s
 ```
 
-1. Attribute Event Handlers:
-        `(\b)(on\S+)(\s*)=`: This part is designed to identify potential event handlers in HTML attributes that start with "on" (e.g., onclick, onmouseover).
-            `(\b)`: Word boundary to ensure that "on" is the beginning of a word.
-            `(on\S+)`: Matches "on" followed by one or more non-whitespace characters (the actual event handler).
-            `(\s*)`: Matches any whitespace characters following the event handler.
-            `=`: Looks for the equal sign indicating the start of an attribute value.
+1. Attribute Event Handlers:  
+    - `(\b)(on\S+)(\s*)=`: This part is designed to identify potential event handlers in HTML attributes that start with "on" (e.g., onclick, onmouseover).
+       - `(\b)`: Word boundary to ensure that "on" is the beginning of a word.
+       - `(on\S+)`: Matches "on" followed by one or more non-whitespace characters (the actual event handler).
+       - `(\s*)`: Matches any whitespace characters following the event handler.
+       - `=`: Looks for the equal sign indicating the start of an attribute value.
 
 2. Javascript String:
-        `javascript`: This part simply looks for the string "javascript," which could indicate an attempt to execute JavaScript code.
+    - `javascript`: This part simply looks for the string "javascript," which could indicate an attempt to execute JavaScript code.
 
 3. HTML Tags:
-        `<(|\/|[^\/>][^>]+|\/[^>][^>]+)>`: This section attempts to match HTML tags.
-            `<`: Matches the opening bracket of an HTML tag.
-            `(|\/|[^\/>][^>]+|\/[^>][^>]+)`: This part is more complex:
-            `|`: Alternation, meaning it will match any of the options.
-            `\/`: Matches a forward slash, possibly indicating a self-closing tag.
-            `[^\/>][^>]+`: Matches characters that are not a forward slash or a closing bracket, ensuring that the tag has some content.
-            `\/[^>][^>]+`: Matches a forward slash followed by characters, ensuring the tag has some content.
-            `>`: Matches the closing bracket of an HTML tag.
+    - `<(|\/|[^\/>][^>]+|\/[^>][^>]+)>`: This section attempts to match HTML tags.
+     - `<`: Matches the opening bracket of an HTML tag.
+     - `(|\/|[^\/>][^>]+|\/[^>][^>]+)`: This part is more complex:
+      - `|`: Alternation, meaning it will match any of the options.
+      - `\/`: Matches a forward slash, possibly indicating a self-closing tag.
+      - `[^\/>][^>]+`: Matches characters that are not a forward slash or a closing bracket, ensuring that the tag has some content.
+      - `\/[^>][^>]+`: Matches a forward slash followed by characters, ensuring the tag has some content.
+    - `>`: Matches the closing bracket of an HTML tag.
 
 4. Curly Braces Content:
-        `({+.*}+)`: This part attempts to match content enclosed in curly braces. Breaking it down:
-            `(+.*)+`: This part is more complex:
-            `+`: Matches one or more opening curly braces.
-            `.*`: Matches any characters (zero or more).
-            `+`: Matches one or more closing curly braces.
+   - `({+.*}+)`: This part attempts to match content enclosed in curly braces. Breaking it down:
+     - `(+.*)+`: This part is more complex:
+     - `+`: Matches one or more opening curly braces.
+     - `.*`: Matches any characters (zero or more).
+     - `+`: Matches one or more closing curly braces.
 
 # 2. Exploitation
 
 I was searching far and wide for an attack vector, staring at the regex on [regex101](https://regex101.com/) trying to find some flaws where I could throw my `{ }` to get SSTI, until I realized that I probably shouldn't focus on the regex **ITSELF** but more on the context in which it was used.
 
-Knowing the beautiful pearls of wisdom that PHP gift us, I started looking for the usual evasion techniques: Double Url Encoding, Type Juggling, Null Byte Injection (something that would have worked [back in 2008](https://bugs.php .net/bug.php?id=44366) lol), leaving `<?php` tag open and letting the browser fix it (taking inspiration from mutation XSS)...but nothing was letting me win.
-Actually... for the last idea, it would be something that would work if the application saved our files with the `.php` extension and not just a random name as a result of `tempnam()`.
+Knowing the beautiful pearls of wisdom that PHP gift us, I started looking for the usual evasion techniques:   
+Double Url Encoding, Type Juggling, Null Byte Injection (something that would have worked [back in 2008](https://bugs.php .net/bug.php?id=44366) lol), leaving `<?php` tag open and letting the browser fix it (taking inspiration from mutation XSS)...but nothing was letting me win.
+Actually... for the last idea, it would be something that would work if the application saved our files with the `.php` extension and not just a random name as a result of `tempnam()`.  
 Indeed, look how the *same file with unclosed php tag inside* will be interpreted differently by the server with the extension as the only difference:
 
-![](gatotest.png)
+![](./assets/gatotest.png)
 
-But that was not the case.
-Anyway, I started looking in the various documentations, first the Smarty one, then the PHP documentation regarding the various functions used in the code. Usually here you can find warning about how specific functions should be implemented etc.
+But that was not the case.  
+Anyway, I started looking in the various documentations, first the Smarty one, then the PHP documentation regarding the various functions used in the code.  
+Usually here you can find warning about how specific functions should be implemented etc.
 In fact, reading the [PHP documentation of `preg_match()`](https://www.php.net/manual/en/function.preg-match.php) I came across this one:
 
-![](preg_match_warning.png)
-Ummmmhh, can this be useful to us somehow?
+![](./assets/preg_match_warning.png)
+Ummmmhh, can this be useful to us somehow?  
 OFC! Read again the code where `preg_match()` is involved:
 
 ```php
@@ -219,7 +209,7 @@ if(check_data($_POST['data'])){
 
 Let's quickly test in the PHP console what happens when the return value of the `check_data()` function is `1`, `0` or `false`:
 
-![](consoletest.png)
+![](./assets/consoletest.png)
 
 We may have found the path.
 
@@ -229,11 +219,11 @@ Now the question is:
 >How can we cause the `preg_match()` to fail?
 
 Luckily for me lately I had to deal with challenges where for example a ReDoS made a Race Condition possible, I have also recently started a project where I had to deal a lot with regexes and consequently I also had to fight with the regex backtracking nightmare.
-So I know how to make a regex do bad things. And knowing what a "ReDoS" is, helped me to find what i was searching for.
+So I know how to make a regex do bad things. And knowing what a "ReDoS" is, helped me to find what i was searching for.  
 However, in the context of this challenge I still didn't know what the conditions were for causing unexpected behaviors. I just knew I had somehow to blow things up.
 
-So I thought that Google probably had something exotic to offer me.
-Searching for "php preg_match ReDoS" or "php regex failure" you can find some interesting articles:
+So I thought that Google probably had something exotic to offer me.  
+Searching for "*php preg_match ReDoS*" or "*php regex failure*" you can find some interesting articles:
 - [OWASP ReDoS](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
 - [The Explosive Quantifier Trap](https://www.rexegg.com/regex-explosive-quantifiers.html)
 - [Regexploit: DoS-able Regular Expressions](https://blog.doyensec.com/2021/03/11/regexploit.html)
@@ -244,7 +234,7 @@ Everything lead to one path, specially the latest two blogs.
 > In short the problem happens because the `preg_*` functions in PHP builds upon the [PCRE library](http://www.pcre.org/). In PCRE certain regular expressions are matched by using a lot of recursive calls, which uses up a lot of stack space. It is possible to set a limit on the amount of recursions allowed, but in PHP this limit [defaults to 100.000](http://php.net/manual/en/pcre.configuration.php#ini.pcre.recursion-limit) which is more than fits in the stack.
 
 [This Stackoverflow thread](http://stackoverflow.com/questions/7620910/regexp-in-preg-match-function-returning-browser-error) was also linked in the post where it is talked more in depth about this issue.
-Our task was now clear:
+Our task was now clear:  
 *Send an input that would make the regex do 100_000+ recursions, causing SIGSEGV, making the `preg_match()` function return `false` thus making the application think that our input is not malicious, throwing the surprise at the end of the payload something like  `{system(<verybadcommand>)}` to get SSTI --> RCE --> flag :)*.
 
 I had two options to get there:
@@ -253,25 +243,25 @@ I had two options to get there:
 
 Since I didn't want to destroy the challenge's infrastructure, I opted for the latter.
 
-First of all, we need to match the word boundary (`\b`) , meaning that the matching group that comes after will be captured as a whole word.
+First of all, we need to match the word boundary (`\b`) , meaning that the matching group that comes after will be captured as a whole word.  
 Then we need to match the "on" and pass our Christmas gift bag of "X" characters to the quantifier explosive "\*", which will match all the "X" characters, moving the pointer forward by $n$ positions where $n$ is the number of our "X" characters.
-This is the opposite of what would have happened with the "greedy" quantifier ( `*?`), which would have halved the number of iterations.
+This is the opposite of what would have happened with the "greedy" quantifier ( `*?`), which would have halved the number of iterations.  
 It seems complicated, so let's go and visualize it on [regex101](https://regex101.com/).
 
 
-Ok, let's craft something evil now.
+Ok, let's craft something evil now.  
 We need at least 100k iterations, so let's fill the payload with `'X'*100_000`
-aaand it didn't worked.
-Why?
-Well, we're not doing 100k "recursions" in regex terms, but instead we're counting "backtracking steps", which as the [PHP documentation](https://www.php.net/manual/en/pcre.configuration.php#ini.pcre.recursion-limit) states it defaults to 1_000_000 (1M). 
-To reach that, `'X'*500_001` will result in 1 million backtracking steps (500k forward and 500k backwards).
+aaand it didn't worked.  
+Why?  
+Well, we're not doing 100k "recursions" in regex terms, but instead we're counting "backtracking steps", which as the [PHP documentation](https://www.php.net/manual/en/pcre.configuration.php#ini.pcre.recursion-limit) states it defaults to 1_000_000 (1M).   
+To reach that, `'X'*500_001` will result in 1 million backtracking steps (500k forward and 500k backwards).  
 
 Let's try.
-```
+```python
 payload = f"X on{'X'*500_001} {{system('id')}}"
 ```
 
-![](payloadworks.png)
+![](./assets/payloadworks.png)
 
 Profit!
 ## 2.3) PoC
