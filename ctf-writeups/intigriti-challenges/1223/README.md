@@ -1,4 +1,5 @@
 # Intigriti Challenge 1223
+---
 
 ![](./assets/intigriti1223_banner.jpeg)
 
@@ -222,7 +223,7 @@ Let's quickly test in the PHP console what happens when the return value of the 
 
 We may have found the path.
 
-## 2.2) checks bypass with ReDoS that causes SIGSEGV in PCRE  
+## 2.1) checks bypass with ReDoS that causes SIGSEGV in PCRE  
 
 Now the question is:
 >How can we cause the `preg_match()` to fail?
@@ -278,7 +279,7 @@ payload = f"@dimariasimone on{'X'*500_001} {{system('id')}}"
 ![](./assets/payloadworks.png)
 
 Profit!
-## 2.3) PoC
+## 2.2) PoC
 
 ```python
 import requests
@@ -315,12 +316,15 @@ Stacksize   pcre.recursion_limit
 ```
 
 - Since `preg_match()` returns `false` on failure and `1` and `0` respectively if the match was successful and if not, we should do some strict type checking.
-  ![](./assets/possiblefix.png)
+
+![](./assets/possiblefix.png)
 NOTE: this is just a quick fix in the challenge context, generally speaking using the [`preg_last_error()`](https://www.php.net/manual/en/function.preg-last-error.php) function and defining behaviours for each case is a better solution.
   
 - Use regex timeouts: Set a maximum execution time or timeout for regex pattern matching.
 - Use alternatives to regular expressions, such as string manipulation functions or parsing libraries.
 
+
+![My job here is done](./assets/car-driving-car.gif)
 
 ---
 ### TAGS: #ReDoS #SSTI #RCE #PCRE #preg_match
