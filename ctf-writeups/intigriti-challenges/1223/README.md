@@ -183,7 +183,7 @@ Until I realized that I probably shouldn't focus on the regex **ITSELF** but mor
 
 Knowing the beautiful pearls of wisdom that PHP gifts us, I started looking for the usual evasion techniques: 
 - *Type Juggling*
-- *Null Byte Injection* (something that would have worked [back in 2008](https://bugs.php .net/bug.php?id=44366) lol)
+- *Null Byte Injection* (something that would have worked [back in 2008](https://bugs.php.net/bug.php?id=44366) lol)
 - or even leaving `<?php` tag open and letting the server fix it (taking inspiration from mutation XSS).
 However, none of these approaches were allowing me to win.  
 
