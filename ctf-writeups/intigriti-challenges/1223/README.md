@@ -180,7 +180,7 @@ I was searching far and wide for an attack vector, staring at the regex on [rege
 Until I realized that I probably shouldn't focus on the regex **ITSELF** but more on the context in which it was used.
 
 Knowing the beautiful pearls of wisdom that PHP gift us, I started looking for the usual evasion techniques:   
-*Double Url Encoding*, *Type Juggling*, *Null Byte Injection* - something that would have worked [back in 2008](https://bugs.php .net/bug.php?id=44366) lol -  or even leaving `<?php` tag open and letting the browser fix it (taking inspiration from mutation XSS)...but nothing was letting me win.  
+*Double Url Encoding*, *Type Juggling*, *Null Byte Injection* (something that would have worked [back in 2008](https://bugs.php.net/bug.php?id=44366) LOL), or even leaving `<?php` tag open and letting the server fix it (taking inspiration from mutation XSS)...but nothing was letting me win.  
 
 Actually... for the last idea, it would be something that would work if the application saved our files with the `.php` extension and not just a random name as a result of `tempnam()`.  
 Indeed, look how the *same file with unclosed php tag inside* will be interpreted differently by the server with the extension as the only difference:
