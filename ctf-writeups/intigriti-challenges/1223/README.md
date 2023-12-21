@@ -4,7 +4,7 @@
 
 # TL;DR
 
-- The challenge consisted in obtaining RCE via SSTI on PHP's Smarty template engine bypassing a filtering regex by making it go into backtracking, exceeding the PHP's default `pcre.backtrack_limit`, which causes segmentation fault. As `preg_match()` documentation states, the function returns `false` on failure, which will successfully bypass the restrictions.
+- The challenge involved achieving RCE through SSTI on PHP's Smarty template engine. This was accomplished by bypassing a filtering regex through backtracking, exceeding PHP's default `pcre.backtrack_limit`, ultimately leading to a Segmentation Fault. According to the `preg_match()` documentation, the function returns `false` on failure, which will successfully bypass the restrictions.
 
 # 0. Description
 
@@ -13,6 +13,7 @@
 >- The flag format is INTIGRITI{.\*}.
 >- Should NOT use another challenge on the intigriti.io domain.
 
+---
 # 1. Enumeration
 
 ## 1.1) Challenge scenario
@@ -26,14 +27,13 @@
 
 ## 1.2) Technologies
 
-One of the first things we look at are technologies, insidious CVEs and known bugs could give us an easy win.
+One of the first things we look at are technologies; insidious CVEs and known bugs could give us an easy win.
 
 ![wappalyzer](./assets/wappalyzer.png)
 
 Unfortunately, not this time, since Wappalyzer tell us that PHP version is `7.4.33`, which is the latest for the [PHP 7.x branch](https://www.php.net/ChangeLog-7.php). However, it's still PHP 7 and not 8, something to keep in mind.
 
-As a second note of interest, the author of the challenge was kind enough to also give us the version used by Smarty - a well known template engine for PHP - which turns out to be `4.3.4`; which once again, is the [latest release of the project](https://github.com/smarty-php/smarty/releases) without known security bugs.
-
+As a second note of interest, the author of the challenge was kind enough to also give us the version used by Smarty - a well known template engine for PHP - which turns out to be `4.3.4`. Once again, this version is the [latest release of the project](https://github.com/smarty-php/smarty/releases) without known security bugs.
 ## 1.3) Source code analysis
 
 As mentioned previously, we are kindly provided with the source code of the challenge, so let's take a look:
@@ -81,7 +81,6 @@ $smarty->display($just_file);
 unlink($tmpfname);
 ```
 
----
 
 What's happening here?  
 First of all, if we don't provide the `data` parameter to the POST request, it simply render the same page again.
@@ -139,7 +138,7 @@ Thus, our objective is probably to exploit SSTI, Server-Side Template Injection:
 
 It's evident that if we manage to evade the regex and allow curly brackets to be included in the temporary file, we achieve Remote Command Execution (RCE).
 
-## 1.4) Filtering Regex breakdown
+## 1.4) Regex breakdown
 
 Now let's take a look at the regex in detail.
 
@@ -159,14 +158,14 @@ Now let's take a look at the regex in detail.
 
 3. HTML Tags:
     - `<(|\/|[^\/>][^>]+|\/[^>][^>]+)>`: This section attempts to match HTML tags.
-     - `<`: Matches the opening bracket of an HTML tag.
-     - `(|\/|[^\/>][^>]+|\/[^>][^>]+)`: This part is more complex:
-	      - `\/`: Matches a forward slash, possibly indicating a self-closing tag.  
-	        OR (`|`)
-	      - `[^\/>][^>]+`: Matches characters that are not a forward slash or a closing bracket, ensuring that the tag has some content.  
-	        OR (`|`)
-	      - `\/[^>][^>]+`: Matches a forward slash followed by characters, ensuring the tag has some content.
-    - `>`: Matches the closing bracket of an HTML tag.
+	    - `<`: Matches the opening bracket of an HTML tag.
+	    - `(|\/|[^\/>][^>]+|\/[^>][^>]+)`: This part is more complex:
+		    - `\/`: Matches a forward slash, possibly indicating a self-closing tag.  
+		    OR (`|`)
+		    - `[^\/>][^>]+`: Matches characters that are not a forward slash or a closing bracket, ensuring that the tag has some content.  
+		    OR (`|`)
+		    - `\/[^>][^>]+`: Matches a forward slash followed by characters, ensuring the tag has some content.
+	    - `>`: Matches the closing bracket of an HTML tag.
 
 4. Curly Braces Content:
    - `({+.*}+)`: This part attempts to match content enclosed in curly braces. Breaking it down:
@@ -174,28 +173,30 @@ Now let's take a look at the regex in detail.
      - `.*`: Matches any characters (zero or more).
      - `}+`: Matches one or more closing curly braces.
 
+---
 # 2. Exploitation
 
 I was searching far and wide for an attack vector, staring at the regex on [regex101](https://regex101.com/) trying to find some flaws where I could throw my `{ }` to get SSTI...  
 Until I realized that I probably shouldn't focus on the regex **ITSELF** but more on the context in which it was used.
 
-Knowing the beautiful pearls of wisdom that PHP gift us, I started looking for the usual evasion techniques:   
-*Double Url Encoding*, *Type Juggling*, *Null Byte Injection* (something that would have worked [back in 2008](https://bugs.php.net/bug.php?id=44366) LOL), or even leaving `<?php` tag open and letting the server fix it (taking inspiration from mutation XSS)...but nothing was letting me win.  
+Knowing the beautiful pearls of wisdom that PHP gifts us, I started looking for the usual evasion techniques: 
+- *Type Juggling*
+- *Null Byte Injection* (something that would have worked [back in 2008](https://bugs.php .net/bug.php?id=44366) lol)
+- or even leaving `<?php` tag open and letting the server fix it (taking inspiration from mutation XSS).
+However, none of these approaches were allowing me to win.  
 
-Actually... for the last idea, it would be something that would work if the application saved our files with the `.php` extension and not just a random name as a result of `tempnam()`.  
-Indeed, look how the *same file with unclosed php tag inside* will be interpreted differently by the server with the extension as the only difference:
+Actually, for the last idea, it would only work if the application saved our files with the `.php` extension and not just a random name as a result of `tempnam()`.  
+Indeed, observe how the _same file with an unclosed PHP tag inside_ will be interpreted differently by the server with the extension as the only difference:
 
 ![Rendering of file with `<?php` tag open WITHOUT `.php` extension VS WITH `.php` extension](./assets/gatotest.png)
 
 But that was not the case.  
-Anyway, I started looking in the various documentations, firstly on the Smarty one, then on the PHP documentation regarding the various functions used in the code.  
-Usually here you can find warning about how specific functions should be implemented etc.
-In fact, reading the [PHP documentation of `preg_match()`](https://www.php.net/manual/en/function.preg-match.php) I came across this one:
+Anyway, I began looking into various documentations, starting with the Smarty documentation and then referring to the PHP documentation for information about the various functions used in the code. Usually, you can find warnings about how specific functions should be implemented, and, in fact, reading the [PHP documentation of `preg_match()`](https://www.php.net/manual/en/function.preg-match.php), I came across this one:
 
 ![preg_match() Documentation warning...PHP...why????](./assets/preg_match_warning.png)
 
 Ummmmhh, can this be useful to us somehow?  
-OFC! Read again the code where `preg_match()` is involved:
+Certainly! Take another look at the code where `preg_match()` is involved:
 
 ```php
 // returns true if data is malicious
@@ -226,13 +227,12 @@ We may have found the path.
 Now the question is:
 >How can we cause the `preg_match()` to fail?
 
-Luckily for me lately I had to deal with challenges where for example a ReDoS made a Race Condition possible, I have also recently started a project where I had to deal a lot with regexes and therefore I also had to fight with the regex backtracking nightmare.  
+Luckily for me, lately I had to deal with challenges where a "ReDoS" made a Race Condition possible, I have also recently started a project where I had to deal a lot with regexes and therefore I also had to fight with the regex backtracking nightmare.  
 So I know how to make a regex do bad things. And knowing what a "ReDoS" is, helped me to find what i was searching for.  
 
 However, in the context of this challenge I still didn't know what the conditions were for causing unexpected behaviors. I just knew I had somehow to blow things up.
 
-So I thought that Google probably had something exotic to offer me.  
-Searching for "*php preg_match ReDoS*" or "*php regex failure*" you can find some interesting articles:
+So, I thought Google might have something exotic to offer me. Searching for "_php preg_match ReDoS_" or "_php regex failure_," you can find some interesting articles:
 - [OWASP ReDoS](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
 - [The Explosive Quantifier Trap](https://www.rexegg.com/regex-explosive-quantifiers.html)
 - [Regexploit: DoS-able Regular Expressions](https://blog.doyensec.com/2021/03/11/regexploit.html)
@@ -259,8 +259,8 @@ First of all, we need to put pressure on the Explosive Quantifier `*` that we ca
 ```
 
 Let's start by matching the word boundary (`\b`) , meaning that the matching group that comes after will be captured as a whole word.  
-Then we need to match the "on" and pass our Christmas gift bag of "X" characters to the quantifier explosive "\*", which will match all the "X" characters, moving the pointer forward by $n$ positions where $n$ is the number of our "X" characters.
-This is the opposite of what would have happened with the "greedy" quantifier ( `*?`), which would have halved the number of iterations.  
+Then we need to match the "on" and we're ready to give our Christmas gift of "X" characters to the quantifier explosive "\*", which will match all the "X" characters, moving the pointer forward by `n` positions where `n` is the number of our "X" characters.  
+This is the opposite of what would have happened with the "greedy" quantifier ( `*?`), which would have halved the number of iterations.
 It seems complicated, so let's go and visualize it on [regex101](https://regex101.com/) using the debugger.
 
 
@@ -292,13 +292,13 @@ print(r.text.split(' ')[-1])
 
 > INTIGRITI{7h3_fl46_l457_71m3_w45_50_1r0n1c!}
 
-
+---
 # 3. Mitigation
 
 To mitigate the issue, we have some work to do.  
-A solution would be to just not use PHP, but I understand that some people may be affectionate :/  
+A solution could be to avoid using PHP altogether, but I understand that some people may be fond of it :/
 
-Here's some mitigation steps:
+Here are some mitigation steps:
 - Under PHP, this maximum recursion depth is specified with the `pcre.recursion_limit` configuration variable and (unfortunately) the default value is set to 100,000. **This value is TOO BIG!** Here is a table of safe values of `pcre.recursion_limit` for a variety of executable stack sizes:
 
 ```php
@@ -323,4 +323,4 @@ NOTE: this is just a quick fix in the challenge context, generally speaking usin
 
 
 ---
-### TAGS: #ReDoS #SSTI #RCE #PCRE #preg_match 
+### TAGS: #ReDoS #SSTI #RCE #PCRE #preg_match
