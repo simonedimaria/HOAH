@@ -25,7 +25,7 @@
 
 Let's go! Another Intigriti Challenge, time to get some coffe and win swa...oh...PHP...regex...
 
-![](./assets/sus_cat.jpg)
+![](./assets/ahhh_cat.jpeg)
 
 ## 1.2) Technologies
 
