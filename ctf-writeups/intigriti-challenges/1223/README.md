@@ -192,7 +192,7 @@ Anyway, I started looking in the various documentations, firstly on the Smarty o
 Usually here you can find warning about how specific functions should be implemented etc.
 In fact, reading the [PHP documentation of `preg_match()`](https://www.php.net/manual/en/function.preg-match.php) I came across this one:
 
-![preg_match() Documentation warning](./assets/preg_match_warning.png)
+![preg_match() Documentation warning...PHP...why????](./assets/preg_match_warning.png)
 
 Ummmmhh, can this be useful to us somehow?  
 OFC! Read again the code where `preg_match()` is involved:
@@ -291,6 +291,36 @@ print(r.text.split(' ')[-1])
 ```
 
 > INTIGRITI{7h3_fl46_l457_71m3_w45_50_1r0n1c!}
+
+
+# 3. Mitigation
+
+To mitigate the issue, we have some work to do.  
+A solution would be to just not use PHP, but I understand that some people may be affectionate :/  
+
+Here's some mitigation steps:
+- Under PHP, this maximum recursion depth is specified with the `pcre.recursion_limit` configuration variable and (unfortunately) the default value is set to 100,000. **This value is TOO BIG!** Here is a table of safe values of `pcre.recursion_limit` for a variety of executable stack sizes:
+
+```php
+Stacksize   pcre.recursion_limit
+ 64 MB      134217
+ 32 MB      67108
+ 16 MB      33554
+  8 MB      16777
+  4 MB      8388
+  2 MB      4194
+  1 MB      2097
+512 KB      1048
+256 KB      524
+```
+
+- Since `preg_match()` returns `false` on failure and `1` and `0` respectively if the match was successful and if not, we should do some strict type checking.
+  ![](./assets/possiblefix.png)
+NOTE: this is just a quick fix in the challenge context, generally speaking using the [`preg_last_error()`](https://www.php.net/manual/en/function.preg-last-error.php) function and defining behaviours for each case is a better solution.
+  
+- Use regex timeouts: Set a maximum execution time or timeout for regex pattern matching.
+- Use alternatives to regular expressions, such as string manipulation functions or parsing libraries.
+
 
 ---
 ### TAGS: #ReDoS #SSTI #RCE #PCRE #preg_match 
