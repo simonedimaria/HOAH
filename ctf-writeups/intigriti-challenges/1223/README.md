@@ -14,6 +14,8 @@
 >- The flag format is INTIGRITI{.\*}.
 >- Should NOT use another challenge on the intigriti.io domain.
 
+![](./assets/yeshoneymeme.png)
+
 ---
 # 1. Enumeration
 
@@ -21,10 +23,9 @@
 
 ![challenge first look](./assets/firstlook.png)
 
+Let's go! Another Intigriti Challenge, time to get some coffe and win swa...oh...PHP...regex...
 
-
-
-![](./assets/yeshoneymeme.png)
+![](./assets/sus_cat.jpg)
 
 ## 1.2) Technologies
 
@@ -318,6 +319,7 @@ Stacksize   pcre.recursion_limit
 - Since `preg_match()` returns `false` on failure and `1` and `0` respectively if the match was successful and if not, we should do some strict type checking.
 
 ![](./assets/possiblefix.png)
+
 NOTE: this is just a quick fix in the challenge context, generally speaking using the [`preg_last_error()`](https://www.php.net/manual/en/function.preg-last-error.php) function and defining behaviours for each case is a better solution.
   
 - Use regex timeouts: Set a maximum execution time or timeout for regex pattern matching.
