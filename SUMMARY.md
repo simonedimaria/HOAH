@@ -23,6 +23,8 @@
     * [Dungeons And Breakfast](ctf-writeups/reply-ctf/dungeons-and-breakfast.md)
   * [Teamitaly CTF 2022](ctf-writeups/teamitaly-ctf/README.md)
     * [Flag Proxy](ctf-writeups/teamitaly-ctf/flag-proxy.md)
+  * [MOCA CTF 2024 Quals](ctf-writeups/moca-ctf-2024-quals/README.md)
+    * [RaaS \[WEB\]](ctf-writeups/moca-ctf-2024-quals/raas-web.md)
 * [Smart Contracts Security](Smart-Contracts-security/README.md)
   * [Code 4 Rena](Smart-Contracts-security/code4rena/README.md)
     * [High Risk Findings](Smart-Contracts-security/code4rena/high-risk-findings/README.md)
