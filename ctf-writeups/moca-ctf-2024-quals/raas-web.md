@@ -20,7 +20,7 @@ description: 500 pts
 
 ***
 
-### 1. Challenge scenario
+## 1. Challenge scenario
 
 We're given a form in which it is possible to insert a link, a title, and be redirected to that URL. There is also the possibility of sending this link to the admin who will in turn be redirected.
 
